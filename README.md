@@ -50,6 +50,12 @@ O Mini Bikcraft Web é uma aplicação frontend que demonstra técnicas avançad
 - ✅ Imagens responsivas com `max-width: 100%`
 - ✅ Layout flexível com CSS Grid
 - ✅ Unidades relativas (rem, %)
+- ✅ Uso de media queries (@media) para adaptar o layout em diferentes larguras de tela:
+  - `@media (max-width: 950px)`: Ajusta grid de vantagens para uma coluna e centraliza subtítulo.
+  - `@media (max-width: 600px)`: Reduz espaçamentos, muda grid principal para uma coluna, ajusta texto e oculta detalhes decorativos.
+  - `@media (max-width: 400px)`: Diminui ainda mais o tamanho do subtítulo para telas muito pequenas.
+
+Essas media queries garantem que o site seja totalmente adaptável e legível em dispositivos móveis, tablets e desktops.
 
 ### **Performance e UX**
 
@@ -151,6 +157,5 @@ Este projeto demonstra:
 - ✅ Design responsivo mobile-first
 - ✅ Organização de código e assets
 - ✅ Boas práticas de nomenclatura CSS
-
 
 **Desenvolvido com foco em código limpo, semântica web e experiência do usuário.** 🚴‍♂️✨
