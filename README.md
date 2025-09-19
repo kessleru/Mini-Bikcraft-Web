@@ -2,29 +2,6 @@
 
 Um projeto pequeno de **HTML** e **CSS** focado nas melhores práticas de desenvolvimento web moderno, apresentando uma landing page responsiva para a marca Bikcraft - especializada em bicicletas elétricas feitas à mão.
 
-## 📋 Sobre o Projeto
-
-O Mini Bikcraft Web é uma aplicação frontend que demonstra técnicas avançadas de HTML semântico e CSS Grid/Flexbox, criando uma experiência de usuário elegante e acessível para uma loja de bicicletas premium.
-
-### 🎯 Produto Principal
-
-**Nimbus Stark** - A melhor bicicleta elétrica da Bikcraft, equipada com os melhores acessórios da marca.
-
-## ✨ Características Principais
-
-### 🔋 Especificações Técnicas
-
-- **Motor Elétrico**: Permite viajar distâncias inimagináveis
-- **Velocidade**: Até 40 km/h - a mais rápida bicicleta elétrica do mercado
-- **Rastreador**: Sistema anti-furto integrado para máxima segurança
-
-### 🛠️ Tecnologias Utilizadas
-
-- **HTML5** com semântica moderna
-- **CSS3** com Grid Layout e Flexbox
-- **Design Responsivo**
-- **Acessibilidade Web (WCAG)**
-
 ## 🎨 Melhores Práticas Implementadas
 
 ### **HTML Semântico**
