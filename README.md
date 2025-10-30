@@ -16,10 +16,11 @@ Um projeto pequeno de **HTML** e **CSS** focado nas melhores práticas de desenv
 
 - ✅ **CSS Grid**: Layout principal com `grid-template-columns`
 - ✅ **Flexbox**: Navegação e elementos flexíveis
-- ✅ **Variáveis CSS**: Cores consistentes (#e21, #900, #f7f7f7)
+- ✅ **Variáveis CSS**: Cores consistentes (#e21, #900, #f7f7f7) utilizando var(--tipo).
 - ✅ **Box-sizing**: border-box para controle preciso de dimensões
 - ✅ **Hover Effects**: Interatividade visual elegante
 - ✅ **Pseudo-elementos**: Detalhes decorativos com `::after`
+- ✅ **Modo Claro/Escuro**: Utilizado o @media (prefers-color-scheme: dark)
 
 ### **Design Responsivo**
 
