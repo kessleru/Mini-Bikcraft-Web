@@ -45,8 +45,14 @@ for (const t of TELAS) {
   await page.setViewport({ width: t.largura, height: t.altura, deviceScaleFactor: 2, isMobile: !!t.mobile, hasTouch: !!t.mobile });
   // Tema fixo: sem isso o Chrome herda o tema do sistema de quem roda.
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: t.tema ?? 'light' }]);
+  // Estado salvo que o app lê ao carregar (ex.: tema ou slide atual).
+  if (t.armazenamento) {
+    await page.evaluateOnNewDocument((itens) => {
+      for (const [chave, valor] of Object.entries(itens)) localStorage.setItem(chave, valor);
+    }, t.armazenamento);
+  }
   await page.goto(BASE + t.caminho, { waitUntil: 'networkidle0', timeout: 60000 });
-  await page.addStyleTag({ content: SEM_ANIMACAO });
+  if (!t.animar) await page.addStyleTag({ content: SEM_ANIMACAO });
   // Rola a página inteira para disparar o que só aparece no scroll.
   await page.evaluate(async () => {
     for (let y = 0; y < document.documentElement.scrollHeight; y += innerHeight / 2) {
@@ -58,9 +64,12 @@ for (const t of TELAS) {
   if (t.antes) await page.evaluate(t.antes);
   await new Promise((r) => setTimeout(r, t.espera ?? 1500));
   const bruto = await page.screenshot({ fullPage: !!t.inteira, captureBeyondViewport: !!t.inteira });
-  const png = await sharp(bruto).png({ palette: true, quality: 85, compressionLevel: 9, effort: 10 }).toBuffer();
+  // PNG com paleta para interface; JPEG para página cheia de fotos (PNG passaria de 400 KB).
+  const imagem = t.arquivo.endsWith('.jpg')
+    ? sharp(bruto).jpeg({ quality: 78, mozjpeg: true })
+    : sharp(bruto).png({ palette: true, quality: 85, compressionLevel: 9, effort: 10 });
   const arquivo = join(SAIDA, t.arquivo);
-  writeFileSync(arquivo, png);
+  writeFileSync(arquivo, await imagem.toBuffer());
   console.log(`✓ ${t.arquivo}  ${(statSync(arquivo).size / 1024).toFixed(0)} KB`);
   await page.close();
 }

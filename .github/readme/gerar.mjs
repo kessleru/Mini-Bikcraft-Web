@@ -6,7 +6,7 @@
  * Sem dependências. Todo texto de terminal nas cenas lá embaixo é cópia de uma
  * execução real — se a saída mudar, cole a nova e rode de novo.
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SAIDA = import.meta.dirname;
@@ -130,7 +130,7 @@ ${linhasSvg(linhas, { x: 20, y0: +(44 + alturaLinha * 0.75).toFixed(1), alturaLi
     </g>`;
 }
 
-function banner({ arquivo, titulo, tagline, stack, pills = [], cores, card, rotulo }) {
+function banner({ arquivo, titulo, tagline, stack, pills = [], cores, card, arte = '', defs = '', circulos = true, rotulo }) {
   const { de, ate, texto = '#ffffff', suave = 'rgba(255,255,255,.78)', circulo = '#ffffff', circuloOpacidade = 0.08 } = cores;
   const tamanhoTitulo = titulo.length > 16 ? 44 : 52;
 
@@ -163,11 +163,14 @@ function banner({ arquivo, titulo, tagline, stack, pills = [], cores, card, rotu
       <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity=".28"/>
     </filter>
     <clipPath id="recorte"><rect width="428" height="252" rx="18"/></clipPath>
+    <clipPath id="moldura"><rect width="1200" height="380" rx="24"/></clipPath>${defs}
   </defs>
 
   <rect width="1200" height="380" rx="24" fill="url(#bg)"/>
-  <circle cx="1105" cy="60" r="190" fill="${circulo}" opacity="${circuloOpacidade}"/>
-  <circle cx="110" cy="360" r="150" fill="${circulo}" opacity="${circuloOpacidade * 0.8}"/>
+${circulos ? `  <circle cx="1105" cy="60" r="190" fill="${circulo}" opacity="${circuloOpacidade}"/>
+  <circle cx="110" cy="360" r="150" fill="${circulo}" opacity="${circuloOpacidade * 0.8}"/>` : ''}
+  <g clip-path="url(#moldura)">${arte}
+  </g>
 
   <text x="72" y="148" font-family="${FONTE_UI}" font-size="${tamanhoTitulo}" font-weight="800" letter-spacing="-1" fill="${texto}">${escapar(titulo)}</text>
   <text x="74" y="196" font-family="${FONTE_UI}" font-size="24" font-weight="600" fill="${texto}">${escapar(tagline)}</text>
@@ -177,15 +180,38 @@ function banner({ arquivo, titulo, tagline, stack, pills = [], cores, card, rotu
     ${pillsSvg}
   </g>
 
-  <g transform="translate(700,64)">
+${card ? `  <g transform="translate(700,64)">
     <rect width="428" height="252" rx="18" fill="${card.fundo ?? '#ffffff'}" filter="url(#sombra)"/>
     <g clip-path="url(#recorte)">${card.conteudo}
     </g>
-  </g>
+  </g>` : ''}
 </svg>
 `;
   writeFileSync(join(SAIDA, arquivo), svg);
   console.log(`✓ ${arquivo}  (1200×380)`);
+}
+
+/**
+ * Embute um SVG do próprio repositório (logo, ícone) dentro do banner, na
+ * caixa x/y/largura/altura. Ids ganham prefixo para não colidirem entre si.
+ * `trocar` substitui cores literais (ex.: { white: '#1a1a1a' }).
+ */
+function svgArquivo(caminho, { x, y, largura, altura, trocar = {}, extra = '' }) {
+  let bruto = readFileSync(join(SAIDA, '..', '..', caminho), 'utf8')
+    .replace(/<\?xml[^>]*>/g, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+  const raiz = bruto.match(/<svg[ >][^>]*>/)[0];
+  const viewBox =
+    (raiz.match(/viewBox="([^"]+)"/) ?? [])[1] ??
+    `0 0 ${parseFloat(raiz.match(/width="([^"]+)"/)[1])} ${parseFloat(raiz.match(/height="([^"]+)"/)[1])}`;
+  const prefixo = caminho.replace(/[^a-z0-9]/gi, '');
+  let miolo = bruto.slice(bruto.indexOf(raiz) + raiz.length, bruto.lastIndexOf('</svg>'));
+  miolo = miolo
+    .replace(/id="([^"]+)"/g, `id="${prefixo}-$1"`)
+    .replace(/url\(#([^)]+)\)/g, `url(#${prefixo}-$1)`)
+    .replace(/href="#([^"]+)"/g, `href="#${prefixo}-$1"`);
+  for (const [de, para] of Object.entries(trocar)) miolo = miolo.split(`"${de}"`).join(`"${para}"`);
+  return `<svg x="${x}" y="${y}" width="${largura}" height="${altura}" viewBox="${viewBox}" ${extra}>${miolo.trim()}</svg>`;
 }
 
 // Atalhos ANSI para escrever as cenas
@@ -202,9 +228,26 @@ const _ = '\x1b[0m';
 // ---------------------------------------------------------------------
 // Cenas
 // ---------------------------------------------------------------------
-// Card: o trecho real do style.css que troca o tema sem uma linha de JavaScript.
-const k = mg; // propriedade
-const s = c; // valor
+// Arte: a mesma página nos dois temas, lado a lado — o logo e os ícones são os
+// arquivos do próprio repo (img/), com as cores de cada tema do style.css.
+const metade = (x, fundo, cartao, texto, linha) => `
+  <g transform="translate(${x},0)">
+    <rect width="220" height="280" fill="${fundo}"/>
+    ${svgArquivo('img/bikcraft.svg', { x: 58, y: 18, largura: 104, altura: 24, trocar: { black: texto } })}
+    <rect x="16" y="58" width="188" height="92" rx="4" fill="${cartao}"/>
+    <rect x="30" y="74" width="120" height="12" rx="3" fill="${texto}"/>
+    <rect x="30" y="94" width="150" height="6" rx="3" fill="${linha}"/>
+    <rect x="30" y="106" width="130" height="6" rx="3" fill="${linha}"/>
+    <rect x="30" y="122" width="54" height="16" rx="3" fill="#ee2211"/>
+    <rect x="16" y="160" width="188" height="104" rx="4" fill="${cartao}"/>
+    ${['eletrica', 'velocidade', 'rastreador']
+      .map(
+        (icone, i) => `
+    ${svgArquivo(`img/${icone}.svg`, { x: 28, y: 172 + i * 30, largura: 20, altura: 20 })}
+    <rect x="58" y="${178 + i * 30}" width="${[110, 70, 96][i]}" height="8" rx="4" fill="${texto}" opacity=".75"/>`,
+      )
+      .join('')}
+  </g>`;
 
 banner({
   arquivo: 'banner.svg',
@@ -217,23 +260,17 @@ banner({
     { texto: 'Responsivo', fundo: 'rgba(255,255,255,.16)', cor: '#ffffff' },
     { texto: 'Zero JS', fundo: 'rgba(255,255,255,.16)', cor: '#ffffff' },
   ],
-  card: {
-    fundo: '#0d1117',
-    conteudo: cardTerminal({
-      titulo: 'style.css',
-      linhas: [
-        `${am}:root${_} {`,
-        `  ${k}--cor-primaria${_}: ${s}#e21${_};`,
-        `  ${k}--fundo-1${_}: ${s}#f7f7f7${_};`,
-        `  ${k}--texto${_}: ${s}#000000${_};`,
-        `}`,
-        `${az}@media${_} (${k}prefers-color-scheme${_}: ${s}dark${_}) {`,
-        `  ${am}:root${_} {`,
-        `    ${k}--fundo-1${_}: ${s}#111111${_};`,
-        `    ${k}--texto${_}: ${s}#ffffff${_};`,
-        `  }`,
-        `}`,
-      ],
-    }),
-  },
+  defs: `<clipPath id="janela"><rect width="440" height="280" rx="16"/></clipPath>`,
+  arte: `
+  <g transform="translate(706,50)" filter="url(#sombra)">
+    <rect width="440" height="280" rx="16" fill="#111111"/>
+    <g clip-path="url(#janela)">
+      ${metade(0, '#f7f7f7', '#ffffff', '#000000', '#e6e6e6')}
+      ${metade(220, '#111111', '#000000', '#ffffff', '#2a2a2a')}
+    </g>
+    <line x1="220" y1="0" x2="220" y2="280" stroke="#ee2211" stroke-width="3"/>
+    <circle cx="220" cy="140" r="20" fill="#ee2211"/>
+    <path d="M220 128a12 12 0 0 1 0 24z" fill="#ffffff"/>
+    <circle cx="220" cy="140" r="12" fill="none" stroke="#ffffff" stroke-width="2"/>
+  </g>`,
 });
